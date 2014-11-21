@@ -1,38 +1,85 @@
-#!/bin/bash -e
+#!/bin/bash
 
-echo "#########################"
-echo "Creating Service Gateway"
-echo "#########################"
+if [ $1 == "clean" ] ; then
 
-cd echo-sg
-apc app create echo-sg --disable-routes
-apc gateway promote echo-sg --type echosg
+	echo "#########################"
+	echo "UnBind Service to the job"
+	echo "#########################"
 
-echo "#########################"
-echo "Creating Service Provider"
-echo "#########################"
+	apc service unbind echo0 -j echoClient
 
-cd ../echo-server
-apc app create echo-server --disable-routes
-apc app update echo-server --port-add 3000
-apc app start echo-server
+	echo "#########################"
+	echo "Deleting Capsule echoClient"
+	echo "#########################"
 
-echo "#########################"
-echo "Registering Service Provider"
-echo "#########################"
+	apc capsule delete echoClient
 
-apc provider register echo --type echosg --job echo-server -port 3000 --url http://user:pass@example.com/ping
+	echo "#########################"
+	echo "Deleting Service echo0"
+	echo "#########################"
 
-echo "#########################"
-echo "Creating Service"
-echo "#########################"
+	apc service delete echo0
 
-apc service create echoer-0 --provider echo
+	echo "##############################"
+	echo "Unregistering Provider echo"
+	echo "##############################"
 
-echo "#########################"
-echo "Creating Capsule to test service binding"
-echo "#########################"
+	apc provider delete echo
 
-apc capsule create echoClient --image linux -ae
-echo "Bind Service"
-apc service bind echoer-0 -j echoClient
+	echo "#####################################"
+	echo "Deleting Service Provider echo-server"
+	echo "#####################################"
+
+	apc app delete echo-server
+
+	echo "#################################"
+	echo "Deleting Service Gateway echo-sg"
+	echo "#################################"
+
+
+	apc app delete echo-sg
+
+else
+	
+	echo "#########################"
+	echo "Creating Service Gateway"
+	echo "#########################"
+
+	cd echo-sg
+	apc app create echo-sg --disable-routes
+	apc gateway promote echo-sg --type echosg
+
+	echo "#########################"
+	echo "Creating Service Provider"
+	echo "#########################"
+
+	cd ../echo-server
+	apc app create echo-server --disable-routes
+	apc app update echo-server --port-add 3000
+	apc app start echo-server
+
+	echo "#########################"
+	echo "Registering Service Provider"
+	echo "#########################"
+
+	apc provider register echo --type echosg --job echo-server -port 3000 --url http://can-be-anything.com/echo
+
+	echo "#########################"
+	echo "Creating Service echo0"
+	echo "#########################"
+
+	apc service create echo0 --provider echo
+
+	echo "########################################"
+	echo "Creating Capsule to test service binding"
+	echo "########################################"
+
+	apc capsule create echoClient --image linux -ae
+
+	echo "#########################"
+	echo "Bind Service to the job"
+	echo "#########################"
+
+	apc service bind echo0 -j echoClient
+
+fi

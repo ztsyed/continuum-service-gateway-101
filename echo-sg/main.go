@@ -2,7 +2,7 @@ package main
 
 /*
 	A simple Continuum Echo Service Gateway, without any persistant storage.
-	@author: Zia Syed <zia.syed@ericsson.com>
+	@author: Zia Syed <xia.syed@gmail.com>
 
  	Requirements:
  	1 - A simple web app that sends back the request URL
@@ -27,7 +27,7 @@ package main
     b) apc app update echo-server --port-add 3000
     c) apc app start echo-server
   3- Register provider
-    a) apc provider register echo --type echosg --job echo-server -port 3000 --url http://user:pass@example.com/ping
+    a) apc provider register echo --type echosg --job echo-server -port 3000 --url http://user:pass@example.com/echo
 	4- Create Service
 		a) apc service create s-0 --provider echo
 	5- Bind Service
@@ -58,10 +58,10 @@ var apis = []byte(`{
   },
   "/providers": {
     "GET": [{}],
-    "POST": {"params": {"url": "user:pass@http://example.com:3000/"}}
+    "POST": {"params": {"url": "http://example.com:3000/"}}
   },
   "/providers/:id": {
-    "GET": {"params": {"url": "user:pass@http://example.com:3000/"}},
+    "GET": {"params": {"url": "http://example.com:3000/"}},
     "DELETE": {}
   },
   "/services": {
@@ -69,7 +69,7 @@ var apis = []byte(`{
     "POST": {}
   },
   "/services/:id": {
-    "GET": {"params": {"test_key": "test_val"}},
+    "GET": {},
     "DELETE": {}
   }
 }`)
@@ -121,7 +121,7 @@ func getAllBindingsHandler(rw http.ResponseWriter, req *http.Request) {
 	io.WriteString(rw, string(response))
 }
 
-//curl -i -X POST -H "Content-Type: application/json" -d '{"service_id":"7cf096d"}' "http://user:pass@localhost:3000/bindings"
+//curl -i -X POST -H "Content-Type: application/json" -d '{"service_id":"7cf096d"}' "http://localhost:3000/bindings"
 func addBindingsHandler(rw http.ResponseWriter, req *http.Request) {
 	params := req.URL.Query()
 	log.Println("addBindingsHandler created:", params.Get(":id"))
@@ -171,7 +171,7 @@ func addBindingsHandler(rw http.ResponseWriter, req *http.Request) {
 		binding.Id = uuid.NewV4().String()
 	}
 	binding.Name = "SAPC binding to " + service.Name
-	binding.Url = provider.Params["url"] + "/"
+	binding.Url = provider.Params["url"]
 	binding.Protocol = map[string]string{"scheme": "http"}
 	Bindings = append(Bindings, binding)
 	response, _ := json.Marshal(binding)
@@ -302,7 +302,7 @@ func getProvidersHandler(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusNotFound)
 }
 
-//curl -i -X POST -H "Content-Type: application/json" -d '{"name":"provider_name","type":"echo","params": {"url": "mysql://mysql:mysql@localhost:3306/"}}' "http://localhost:3000/providers"
+//curl -i -X POST -H "Content-Type: application/json" -d '{"name":"provider_name","type":"echo","params": {"url": "mysql://localhost:3306/"}}' "http://localhost:3000/providers"
 func addProvidersHandler(rw http.ResponseWriter, req *http.Request) {
 	log.Println("addProvidersHandler received:")
 	defer req.Body.Close()
